@@ -100,14 +100,12 @@ impl OpCLI {
             .spawn()?;
         {
             let stdin = child.stdin.as_mut().unwrap();
-            io::stdout().write_all("Please entry your 1password master password".as_bytes())?;
             let mut pass = String::new();
             io::stdin().read_line(&mut pass)?;
             stdin.write_all(pass.as_bytes())?;
         }
         let output = child.wait_with_output()?;
         let expiration_time = Utc::now() + Duration::minutes(29);
-        io::stdout().write_all("signIn successfully".as_bytes())?;
         Ok(Self {
             expiration_time: expiration_time,
             session: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -127,8 +125,11 @@ impl OpCLI {
         ])
         .await?;
         let item_lite: ItemLite = serde_json::from_str(&output)?;
-        io::stdout().write_all(format!("Go {}", item_name).as_bytes())?;
         Ok(item_lite)
+    }
+
+    pub fn as_ref(&self) -> &Self {
+        &self
     }
 }
 
