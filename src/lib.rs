@@ -91,6 +91,7 @@ impl OpCLI {
 
     pub async fn new_with_pass_input(user: String, alive: bool) -> Result<Self> {
         let mut pass = String::new();
+        print!("please entry your 1password master password:");
         let mut child = Command::new("op")
             .arg("signin")
             .arg(user)
@@ -99,7 +100,6 @@ impl OpCLI {
             .stdout(Stdio::piped())
             .spawn()?;
         {
-            print!("please entry your 1password master password:");
             let stdin = child.stdin.as_mut().unwrap();
             io::stdin().read_line(&mut pass)?;
             stdin.write_all(pass.as_bytes())?;
