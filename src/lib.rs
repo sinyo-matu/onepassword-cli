@@ -82,6 +82,7 @@ impl OpCLI {
         }
         let output = child.wait_with_output()?;
         let expiration_time = Utc::now() + Duration::minutes(29);
+        println!("signIn successfully");
         Ok(Self {
             expiration_time: expiration_time,
             session: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -99,13 +100,13 @@ impl OpCLI {
             .spawn()?;
         {
             let stdin = child.stdin.as_mut().unwrap();
-            print!("Please entry your 1password master password:");
             let mut pass = String::new();
             io::stdin().read_line(&mut pass)?;
             stdin.write_all(pass.as_bytes())?;
         }
         let output = child.wait_with_output()?;
         let expiration_time = Utc::now() + Duration::minutes(29);
+        println!("signIn successfully");
         Ok(Self {
             expiration_time: expiration_time,
             session: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -125,6 +126,7 @@ impl OpCLI {
         ])
         .await?;
         let item_lite: ItemLite = serde_json::from_str(&output)?;
+        println!("Got {}", item_name);
         Ok(item_lite)
     }
 }
