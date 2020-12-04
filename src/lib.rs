@@ -54,6 +54,7 @@ pub enum Error {
     QueryItemDeserializeError(#[from] serde_json::error::Error),
 }
 
+#[derive(Clone)]
 pub struct OpCLI {
     expiration_time: DateTime<Utc>,
     session: String,
@@ -126,10 +127,6 @@ impl OpCLI {
         .await?;
         let item_lite: ItemLite = serde_json::from_str(&output)?;
         Ok(item_lite)
-    }
-
-    pub fn as_ref(&self) -> &Self {
-        &self
     }
 }
 
