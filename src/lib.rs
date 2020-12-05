@@ -15,12 +15,12 @@ mod tests {
         assert_eq!(op_cli.session.len(), 44);
         Ok(())
     }
-    #[test]
-    fn test_new_with_pass_input() -> Result<()> {
-        let op_cli = block_on(OpCLI::new_with_pass_input("my".to_string(), false))?;
-        assert_eq!(op_cli.session.len(), 44);
-        Ok(())
-    }
+    // #[test]
+    // fn test_new_with_pass_input() -> Result<()> {
+    //     let op_cli = block_on(OpCLI::new_with_pass_input("my".to_string(), false))?;
+    //     assert_eq!(op_cli.session.len(), 44);
+    //     Ok(())
+    // }
 
     #[test]
     fn test_get_username_password() -> Result<()> {
@@ -37,10 +37,10 @@ mod tests {
 
 use chrono::{prelude::*, Duration};
 use serde::{Deserialize, Serialize};
-use std::io;
-use std::io::Write;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use thiserror::Error;
+use tokio::io::{self, AsyncWriteExt};
+use tokio::process::Command;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -79,11 +79,13 @@ impl OpCLI {
             .spawn()?;
         {
             let stdin = child.stdin.as_mut().unwrap();
-            stdin.write_all(pass.as_bytes())?
+            stdin.write_all(pass.as_bytes()).await?
         }
-        let output = child.wait_with_output()?;
+        let output = child.wait_with_output().await?;
         let expiration_time = Utc::now() + Duration::minutes(29);
-        io::stdout().write_all("signIn successfully".as_bytes())?;
+        io::stdout()
+            .write_all("signIn successfully\n".as_bytes())
+            .await?;
         Ok(Self {
             expiration_time: expiration_time,
             session: String::from_utf8_lossy(&output.stdout).to_string(),
@@ -91,28 +93,26 @@ impl OpCLI {
         })
     }
 
-    pub async fn new_with_pass_input(user: String, alive: bool) -> Result<Self> {
-        let mut child = Command::new("op")
-            .arg("signin")
-            .arg(user)
-            .arg("--raw")
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .spawn()?;
-        {
-            let stdin = child.stdin.as_mut().unwrap();
-            let mut pass = String::new();
-            io::stdin().read_line(&mut pass)?;
-            stdin.write_all(pass.as_bytes())?;
-        }
-        let output = child.wait_with_output()?;
-        let expiration_time = Utc::now() + Duration::minutes(29);
-        Ok(Self {
-            expiration_time: expiration_time,
-            session: String::from_utf8_lossy(&output.stdout).to_string(),
-            keep_session_alive: alive,
-        })
-    }
+    // pub async fn new_with_pass_input(user: String, alive: bool) -> Result<Self> {
+    //     let mut child = Command::new("op")
+    //         .arg("signin")
+    //         .arg(user)
+    //         .arg("--raw")
+    //         .stdin(Stdio::piped())
+    //         .stdout(Stdio::piped())
+    //         .spawn()?;
+    //     {
+    //         let stdin = child.stdin.as_mut().unwrap();
+    //         let mut pass = Vec::new();
+    //     }
+    //     let output = child.wait_with_output().await?;
+    //     let expiration_time = Utc::now() + Duration::minutes(29);
+    //     Ok(Self {
+    //         expiration_time: expiration_time,
+    //         session: String::from_utf8_lossy(&output.stdout).to_string(),
+    //         keep_session_alive: alive,
+    //     })
+    // }
 
     pub async fn get_username_password(&self, item_name: &str) -> Result<ItemLite> {
         let output = exec_command(&[
@@ -126,6 +126,9 @@ impl OpCLI {
         ])
         .await?;
         let item_lite: ItemLite = serde_json::from_str(&output)?;
+        io::stdout()
+            .write_all(format!("Got {}\n", item_name).as_bytes())
+            .await?;
         Ok(item_lite)
     }
 }
@@ -135,7 +138,7 @@ async fn exec_command(args: &[&str]) -> Result<String> {
         .args(args)
         .stdout(Stdio::piped())
         .spawn()?;
-    let output = child.wait_with_output()?;
+    let output = child.wait_with_output().await?;
     // println!("2{:?}", &output.stdout);
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
 }
