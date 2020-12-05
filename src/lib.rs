@@ -1,39 +1,4 @@
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tokio_test::block_on;
-
-    use crate::OpCLI;
-
-    #[test]
-    fn test_new_with_pass() -> Result<()> {
-        let op_cli = block_on(OpCLI::new_with_pass(
-            "my".to_string(),
-            "64659027Qy".to_string(),
-            false,
-        ))?;
-        assert_eq!(op_cli.session.len(), 44);
-        Ok(())
-    }
-    // #[test]
-    // fn test_new_with_pass_input() -> Result<()> {
-    //     let op_cli = block_on(OpCLI::new_with_pass_input("my".to_string(), false))?;
-    //     assert_eq!(op_cli.session.len(), 44);
-    //     Ok(())
-    // }
-
-    #[test]
-    fn test_get_username_password() -> Result<()> {
-        let op_cli = block_on(OpCLI::new_with_pass(
-            "my".to_string(),
-            "64659027Qy".to_string(),
-            false,
-        ))?;
-        let item = block_on(op_cli.get_username_password("SBI証券"))?;
-        assert_eq!(item.username, "seelerei0130".to_string());
-        Ok(())
-    }
-}
+mod tests;
 
 use chrono::{prelude::*, Duration};
 use serde::{Deserialize, Serialize};
@@ -83,9 +48,7 @@ impl OpCLI {
         }
         let output = child.wait_with_output().await?;
         let expiration_time = Utc::now() + Duration::minutes(29);
-        io::stdout()
-            .write_all("signIn successfully\n".as_bytes())
-            .await?;
+        io::stdout().write_all(b"signIn successfully\n").await?;
         Ok(Self {
             expiration_time: expiration_time,
             session: String::from_utf8_lossy(&output.stdout).to_string(),
