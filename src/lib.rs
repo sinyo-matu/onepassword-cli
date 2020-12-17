@@ -11,8 +11,10 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Error, Debug)]
 pub enum Error {
+    #[error("signIn system error : {0}")]
+    IOError(#[from] std::io::Error),
     #[error("signIn error : {0}")]
-    SignInError(#[from] std::io::Error),
+    SignInError(String),
     #[error("query item error : {0}")]
     QueryItemError(String),
     #[error("deserialize error : {0}")]
