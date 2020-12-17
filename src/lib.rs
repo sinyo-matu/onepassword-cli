@@ -1,4 +1,4 @@
-//mod tests;
+mod tests;
 
 use chrono::{prelude::*, Duration};
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ pub enum Error {
     #[error("signIn error : {0}")]
     SignInError(#[from] std::io::Error),
     #[error("query item error : {0}")]
-    QueryItemError(std::io::Error),
+    QueryItemError(String),
     #[error("deserialize error : {0}")]
     QueryItemDeserializeError(#[from] serde_json::error::Error),
 }
@@ -40,6 +40,7 @@ impl OpCLI {
             .arg(user)
             .arg("--raw")
             .stdin(Stdio::piped())
+            .stderr(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()?;
         {
@@ -47,6 +48,12 @@ impl OpCLI {
             stdin.write_all(pass.as_bytes()).await?
         }
         let output = child.wait_with_output().await?;
+        if String::from_utf8_lossy(&output.stderr)
+            .to_string()
+            .contains("Authentication")
+        {
+            return Err(Error::QueryItemError(String::from("Unauthorized")));
+        }
         let expiration_time = Utc::now() + Duration::minutes(29);
         io::stdout().write_all(b"signIn successfully\n").await?;
         Ok(Self {
@@ -100,8 +107,15 @@ async fn exec_command(args: &[&str]) -> Result<String> {
     let child = Command::new("op")
         .args(args)
         .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .spawn()?;
     let output = child.wait_with_output().await?;
+    if String::from_utf8_lossy(&output.stderr)
+        .to_string()
+        .contains("doesn't seem to be an item")
+    {
+        return Err(Error::QueryItemError(String::from("Wrong Item name")));
+    }
     // println!("2{:?}", &output.stdout);
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
 }
