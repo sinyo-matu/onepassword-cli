@@ -1,4 +1,4 @@
-// mod tests;
+mod tests;
 
 use chrono::{prelude::*, Duration};
 use serde::{Deserialize, Serialize};
@@ -14,9 +14,9 @@ pub enum Error {
     #[error("signIn system error : {0}")]
     IOError(#[from] std::io::Error),
     #[error("signIn error : {0}")]
-    SignInError(String),
+    SignInError(#[from] OPSignInError),
     #[error("query item error : {0}")]
-    QueryItemError(String),
+    QueryItemError(#[from] OPQueryItemError),
     #[error("deserialize error : {0}")]
     QueryItemDeserializeError(#[from] serde_json::error::Error),
 }
@@ -50,12 +50,7 @@ impl OpCLI {
             stdin.write_all(pass.as_bytes()).await?
         }
         let output = child.wait_with_output().await?;
-        if String::from_utf8_lossy(&output.stderr)
-            .to_string()
-            .contains("Authentication")
-        {
-            return Err(Error::QueryItemError(String::from("Unauthorized")));
-        }
+        handle_op_signin_error(String::from_utf8_lossy(&output.stderr).to_string()).await?;
         let expiration_time = Utc::now() + Duration::minutes(29);
         io::stdout().write_all(b"signIn successfully\n").await?;
         Ok(Self {
@@ -112,12 +107,35 @@ async fn exec_command(args: &[&str]) -> Result<String> {
         .stderr(Stdio::piped())
         .spawn()?;
     let output = child.wait_with_output().await?;
-    if String::from_utf8_lossy(&output.stderr)
-        .to_string()
-        .contains("doesn't seem to be an item")
-    {
-        return Err(Error::QueryItemError(String::from("Wrong Item name")));
-    }
-    // println!("2{:?}", &output.stdout);
+    handle_op_query_item_error(String::from_utf8_lossy(&output.stderr).to_string()).await?;
     Ok(String::from_utf8_lossy(&output.stdout).to_string())
+}
+
+#[derive(Error, Debug)]
+pub enum OPSignInError {
+    #[error("signIn error :")]
+    WrongPassword,
+}
+#[derive(Error, Debug)]
+pub enum OPQueryItemError {
+    #[error("wrong item name :")]
+    WrongItemName,
+    #[error("invalid session :")]
+    InvalidSession,
+}
+
+async fn handle_op_signin_error(std_err: String) -> std::result::Result<(), OPSignInError> {
+    if std_err.contains("401") {
+        return Err(OPSignInError::WrongPassword);
+    }
+    Ok(())
+}
+
+async fn handle_op_query_item_error(std_err: String) -> std::result::Result<(), OPQueryItemError> {
+    if std_err.contains("doesn't seem to be an item") {
+        return Err(OPQueryItemError::WrongItemName);
+    } else if std_err.trim().contains("Invalid session token") {
+        return Err(OPQueryItemError::InvalidSession);
+    }
+    Ok(())
 }
