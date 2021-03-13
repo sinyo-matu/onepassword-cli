@@ -63,7 +63,7 @@ use onepassword_cli::*;
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
-let op_cli = OpCLI::new_with_pass("my".to_string(), pass, false)
+let op_cli = OpCLI::new_with_pass("my", &pass)
     .await
     .unwrap();
 let account = op_cli.get().account().run().await;
@@ -78,7 +78,7 @@ use onepassword_cli::*;
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
-let op_cli = OpCLI::new_with_pass("my".to_string(), pass, false)
+let op_cli = OpCLI::new_with_pass("my", &pass)
     .await
     .unwrap();
 let item_lit = op_cli.get().item_lite("facebook").run().await;
@@ -93,7 +93,7 @@ use onepassword_cli::*;
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
-let op_cli = OpCLI::new_with_pass("my".to_string(), pass, false)
+let op_cli = OpCLI::new_with_pass("my", &pass)
     .await
     .unwrap();
 let account = op_cli.create().document("auth.log").run().await;
@@ -108,7 +108,7 @@ use onepassword_cli::*;
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
-let op_cli = OpCLI::new_with_pass("my".to_string(), pass, false)
+let op_cli = OpCLI::new_with_pass("my", &pass)
     .await
     .unwrap();
 let otps = op_cli.get().totp("facebook").run().await;

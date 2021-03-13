@@ -15,28 +15,26 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub struct OpCLI {
     expiration_time: DateTime<Utc>,
     session: String,
-    keep_session_alive: bool,
 }
 
 impl OpCLI {
-    pub async fn new_with_pass(user: String, pass: String, alive: bool) -> Result<Self> {
+    pub async fn new_with_pass(username: &str, password: &str) -> Result<Self> {
         let mut child = Command::new("op")
             .arg("signin")
-            .arg(user)
+            .arg(username)
             .arg("--raw")
             .stdin(Stdio::piped())
             .stderr(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()?;
         let stdin = child.stdin.as_mut().unwrap();
-        stdin.write_all(pass.as_bytes()).await?;
+        stdin.write_all(password.as_bytes()).await?;
         let output = child.wait_with_output().await?;
         handle_op_signin_error(String::from_utf8_lossy(&output.stderr).to_string()).await?;
         let expiration_time = Utc::now() + Duration::minutes(29);
         Ok(Self {
             expiration_time,
             session: String::from_utf8_lossy(&output.stdout).to_string(),
-            keep_session_alive: alive,
         })
     }
 
