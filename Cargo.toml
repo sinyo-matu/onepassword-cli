@@ -6,7 +6,7 @@ edition = "2018"
 license = "MIT"
 description = "a wrapper for 1password-cli, which focus on easy-to-use"
 categories = ["api-bindings","development-tools"]
-keywords = ["command-line-interface","1password"]
+keywords = ["cli","1password","wrapper"]
 repository = "https://github.com/sinyo-matu/onepassword-cli"
 readme = "README.md"
 
