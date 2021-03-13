@@ -2,11 +2,35 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 pub use serde_json::Value;
 
+pub type ListDocuments = Vec<ListDocument>;
+
+pub type ListItems = Vec<ListItem>;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ItemLite {
     pub website: String,
     pub username: String,
     pub password: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetItem {
+    pub uuid: String,
+    #[serde(alias = "templateUuid")]
+    pub template_uuid: String,
+    pub trashed: String,
+    #[serde(alias = "createdAt")]
+    #[serde(with = "date_format")]
+    pub create_at: DateTime<Local>,
+    #[serde(alias = "updatedAt")]
+    #[serde(with = "date_format")]
+    pub update_at: DateTime<Local>,
+    #[serde(alias = "changerUuid")]
+    pub changer_uuid: String,
+    #[serde(alias = "itemVersion")]
+    pub item_version: usize,
+    #[serde(alias = "vaultUuid")]
+    pub vault_uuid: String,
+    pub details: Value,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -42,6 +66,44 @@ pub struct CreateDocument {
     pub vault_uuid: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ListDocument {
+    pub uuid: String,
+    #[serde(alias = "templateUuid")]
+    pub template_uuid: String,
+    #[serde(alias = "createdAt")]
+    #[serde(with = "date_format")]
+    pub create_at: DateTime<Local>,
+    #[serde(alias = "updatedAt")]
+    #[serde(with = "date_format")]
+    pub update_at: DateTime<Local>,
+    #[serde(alias = "itemVersion")]
+    pub item_version: usize,
+    #[serde(alias = "vaultUuid")]
+    pub vault_uuid: String,
+    pub overview: Value,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ListItem {
+    pub uuid: String,
+    #[serde(alias = "templateUuid")]
+    pub template_uuid: String,
+    pub trashed: String,
+    #[serde(alias = "createdAt")]
+    #[serde(with = "date_format")]
+    pub create_at: DateTime<Local>,
+    #[serde(alias = "updatedAt")]
+    #[serde(with = "date_format")]
+    pub update_at: DateTime<Local>,
+    #[serde(alias = "changerUuid")]
+    pub changer_uuid: String,
+    #[serde(alias = "itemVersion")]
+    pub item_version: usize,
+    #[serde(alias = "vaultUuid")]
+    pub vault_uuid: String,
+    pub overview: Value,
+}
 mod date_format {
     use chrono::{DateTime, Local, TimeZone};
     use serde::{self, Deserialize, Deserializer, Serializer};

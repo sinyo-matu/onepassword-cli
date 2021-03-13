@@ -53,6 +53,13 @@ impl OpCLI {
             session: self.session.to_string(),
         }
     }
+
+    pub fn list(&self) -> ListCmd {
+        ListCmd {
+            cmd: "list".to_string(),
+            session: self.session.to_string(),
+        }
+    }
 }
 
 pub trait FirstCmd {
@@ -98,6 +105,7 @@ macro_rules! its_first_cmd {
 }
 
 its_first_cmd!(CreateCmd);
+its_first_cmd!(ListCmd);
 
 impl GetCmd {
     pub fn account(&self) -> AccountCmd {
@@ -109,13 +117,23 @@ impl GetCmd {
         }
     }
 
-    pub fn item(&self, item_name: &str) -> ItemLiteCmd {
+    ///this method return items' fields of website,username,password
+    pub fn item_lite(&self, item_name: &str) -> ItemLiteCmd {
         let flags: Vec<String> = vec![
             item_name.to_string(),
             "--fields".to_string(),
             "website,username,password".to_string(),
         ];
         ItemLiteCmd {
+            first: self.clone(),
+            cmd: "item".to_string(),
+            flags,
+        }
+    }
+
+    pub fn item(&self, item_name: &str) -> GetItemCmd {
+        let flags: Vec<String> = vec![item_name.to_string()];
+        GetItemCmd {
             first: self.clone(),
             cmd: "item".to_string(),
             flags,
@@ -147,6 +165,26 @@ impl CreateCmd {
         CreateDocumentCmd {
             first: self.clone(),
             cmd: "document".to_string(),
+            flags,
+        }
+    }
+}
+
+impl ListCmd {
+    pub fn documents(&self) -> ListDocumentsCmd {
+        let flags: Vec<String> = Vec::new();
+        ListDocumentsCmd {
+            first: self.clone(),
+            cmd: "documents".to_string(),
+            flags,
+        }
+    }
+
+    pub fn items(&self) -> ListItemsCmd {
+        let flags: Vec<String> = Vec::new();
+        ListItemsCmd {
+            first: self.clone(),
+            cmd: "items".to_string(),
             flags,
         }
     }
@@ -247,7 +285,10 @@ macro_rules! its_second_cmd {
 its_second_cmd!(GetCmd, ItemLiteCmd, ItemLite);
 its_second_cmd!(GetCmd, GetDocumentCmd, Value);
 its_second_cmd!(GetCmd, GetTotpCmd, Value);
+its_second_cmd!(GetCmd, GetItemCmd, GetItem);
 its_second_cmd!(CreateCmd, CreateDocumentCmd, CreateDocument);
+its_second_cmd!(ListCmd, ListDocumentsCmd, ListDocuments);
+its_second_cmd!(ListCmd, ListItemsCmd, ListItems);
 
 #[inline]
 async fn exec_command(args: Vec<String>) -> Result<String> {
