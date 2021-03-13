@@ -81,7 +81,8 @@ let pass = dotenv::var("OP_PASS").unwrap();
 let op_cli = OpCLI::new_with_pass("my", &pass)
     .await
     .unwrap();
-let item_lit = op_cli.get().item_lite("facebook").run().await;
+let item_lite = op_cli.get().item_lite("facebook").run().await;
+println!("username:{},password:{}",item_lite.username,item_lite.password)
 assert!(item_lite.is_ok()) 
 ```
 
