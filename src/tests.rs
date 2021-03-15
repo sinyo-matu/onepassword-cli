@@ -35,14 +35,13 @@ async fn test_account_flags() {
 }
 
 #[tokio::test]
-async fn test_item_lite() {
+async fn test_get_item_lite() {
     dotenv::dotenv().unwrap();
     let pass = dotenv::var("OP_PASS").unwrap();
     let op_cli = OpCLI::new_with_pass("my", &pass).await.unwrap();
     let item_lite = op_cli.get().item_lite("facebook").run().await;
-    let otps = op_cli.get().totp("facebook").run().await;
-    println!("{:?},otps:{:?}", &item_lite, &otps);
-    assert!(item_lite.is_ok())
+    assert!(item_lite.is_ok());
+    println!("{:?}", &item_lite.unwrap().password);
 }
 
 #[tokio::test]

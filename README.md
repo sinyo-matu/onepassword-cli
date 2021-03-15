@@ -78,12 +78,10 @@ use onepassword_cli::*;
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
-let op_cli = OpCLI::new_with_pass("my", &pass)
-    .await
-    .unwrap();
+let op_cli = OpCLI::new_with_pass("my", &pass).await.unwrap();
 let item_lite = op_cli.get().item_lite("facebook").run().await;
-println!("username:{},password:{}",item_lite.username,item_lite.password)
-assert!(item_lite.is_ok()) 
+assert!(item_lite.is_ok());
+println!("{:?}", &item_lite.unwrap().password);
 ```
 
 - create a document
@@ -97,8 +95,8 @@ let pass = dotenv::var("OP_PASS").unwrap();
 let op_cli = OpCLI::new_with_pass("my", &pass)
     .await
     .unwrap();
-let account = op_cli.create().document("auth.log").run().await;
-assert!(account.is_ok())
+let doc = op_cli.create().document("auth.log").run().await;
+assert!(doc.is_ok())
 ```
 
 - get one time password
