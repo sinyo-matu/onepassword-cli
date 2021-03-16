@@ -30,7 +30,7 @@ pub struct GetItem {
     pub item_version: usize,
     #[serde(alias = "vaultUuid")]
     pub vault_uuid: String,
-    pub details: Value,
+    pub details: Value, // this field is a serde_json::Value because its content would change depend on the queried item.
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -81,7 +81,7 @@ pub struct ListDocument {
     pub item_version: usize,
     #[serde(alias = "vaultUuid")]
     pub vault_uuid: String,
-    pub overview: Value,
+    pub overview: Value, // this field is a serde_json::Value because its content would change depend on the queried item.
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -102,8 +102,11 @@ pub struct ListItem {
     pub item_version: usize,
     #[serde(alias = "vaultUuid")]
     pub vault_uuid: String,
-    pub overview: Value,
+    pub overview: Value, // this field is a serde_json::Value because its content would change depend on the queried item.
 }
+
+//this mod helped to deserialize json string to chrono::DateTime.
+//And it was copied from StackOverflow!
 mod date_format {
     use chrono::{DateTime, Local, TimeZone};
     use serde::{self, Deserialize, Deserializer, Serializer};

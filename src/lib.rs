@@ -11,6 +11,8 @@ use tokio::process::Command;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+//OpCLI have expiration_time field what is the token's expiration time.
+//Intent to implement some method to auto renew the token.
 #[derive(Clone)]
 pub struct OpCLI {
     expiration_time: DateTime<Utc>,
@@ -60,6 +62,11 @@ impl OpCLI {
     }
 }
 
+//I need this trait because because there are many different first cmds but they
+//all need same methods to return their fields, we need them later.
+// I don't want this be public, but this is referring by the  SecondCmd trait,
+// and SecondCmd trait is based by SecondCmdExt which have to be public!
+//How can I fix this? //todo
 pub trait FirstCmd {
     fn cmd(&self) -> String;
 
@@ -82,15 +89,17 @@ impl FirstCmd for GetCmd {
     }
 }
 
+//this macro repeat codes above. to create a first cmd then
+//implement FirstCmd trait for it.
 macro_rules! its_first_cmd {
-    ($i:ident) => {
+    ($first_cmd:ident) => {
         #[derive(Debug, Clone)]
-        pub struct $i {
+        pub struct $first_cmd {
             cmd: String,
             session: String,
         }
 
-        impl FirstCmd for $i {
+        impl FirstCmd for $first_cmd {
             fn cmd(&self) -> String {
                 self.cmd.clone()
             }
@@ -105,6 +114,8 @@ macro_rules! its_first_cmd {
 its_first_cmd!(CreateCmd);
 its_first_cmd!(ListCmd);
 
+//Maybe I can generic on some of second cmd's method, they seems like do same thing.
+//todo
 impl GetCmd {
     pub fn account(&self) -> AccountCmd {
         let flags: Vec<String> = Vec::new();
@@ -188,6 +199,7 @@ impl ListCmd {
     }
 }
 
+//I don't want this be public same to FirstCmd comment.
 #[async_trait::async_trait]
 pub trait SecondCmd {
     type Output: DeserializeOwned;
@@ -200,6 +212,9 @@ pub trait SecondCmd {
     fn flags(&self) -> Vec<String>;
 }
 
+//This trait will auto implement for all who implemented SecondCmd trait.
+//But some second cmds may not accept flag!, need some fix! //todo
+//This have to be pubic because its methods will be called out of crate.
 #[async_trait::async_trait]
 pub trait SecondCmdExt: SecondCmd {
     fn add_flag(&mut self, flags: &[&str]) -> &Self {
@@ -252,20 +267,22 @@ impl SecondCmd for AccountCmd {
     }
 }
 
+//This macro repeat above codes. To create a new second cmd struct
+//and implement SecondCmd trait for it.
 macro_rules! its_second_cmd {
-    ($f:ident,$i:ident,$e:ident) => {
+    ($first_cmd:ident,$second_cmd:ident,$output:ident) => {
         #[derive(Debug)]
-        pub struct $i {
-            first: $f,
+        pub struct $second_cmd {
+            first: $first_cmd,
             cmd: String,
             flags: Vec<String>,
         }
 
         #[async_trait::async_trait]
-        impl SecondCmd for $i {
-            type Output = output::$e;
-            type First = $f;
-            fn first(&self) -> $f {
+        impl SecondCmd for $second_cmd {
+            type Output = output::$output;
+            type First = $first_cmd;
+            fn first(&self) -> $first_cmd {
                 self.first.clone()
             }
 
