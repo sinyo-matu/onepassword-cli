@@ -68,9 +68,9 @@ impl OpCLI {
 // and SecondCmd trait is based by SecondCmdExt which have to be public!
 //How can I fix this? //todo
 pub trait FirstCmd {
-    fn cmd(&self) -> String;
+    fn cmd(&self) -> &str;
 
-    fn session(&self) -> String;
+    fn session(&self) -> &str;
 }
 
 #[derive(Debug, Clone)]
@@ -80,12 +80,12 @@ pub struct GetCmd {
 }
 
 impl FirstCmd for GetCmd {
-    fn cmd(&self) -> String {
-        self.cmd.clone()
+    fn cmd(&self) -> &str {
+        &self.cmd
     }
 
-    fn session(&self) -> String {
-        self.session.clone()
+    fn session(&self) -> &str {
+        &self.session
     }
 }
 
@@ -100,12 +100,12 @@ macro_rules! its_first_cmd {
         }
 
         impl FirstCmd for $first_cmd {
-            fn cmd(&self) -> String {
-                self.cmd.clone()
+            fn cmd(&self) -> &str {
+                &self.cmd
             }
 
-            fn session(&self) -> String {
-                self.session.clone()
+            fn session(&self) -> &str {
+                &self.session
             }
         }
     };
@@ -205,9 +205,9 @@ pub trait SecondCmd {
     type Output: DeserializeOwned;
     type First: FirstCmd + Clone;
 
-    fn first(&self) -> Self::First;
+    fn first(&self) -> &Self::First;
 
-    fn cmd(&self) -> String;
+    fn cmd(&self) -> &str;
 
     fn flags(&self) -> Vec<String>;
 }
@@ -228,13 +228,15 @@ pub trait SecondCmdExt: SecondCmd {
 
     async fn run(&self) -> Result<Self::Output> {
         let mut args: Vec<String> = vec![
-            self.first().cmd(),
-            self.cmd(),
+            self.first().cmd().to_string(),
+            self.cmd().to_string(),
             "--session".to_string(),
             self.first().session().trim().to_string(),
         ];
         if !self.flags().is_empty() {
-            self.flags().into_iter().for_each(|flag| args.push(flag))
+            self.flags()
+                .into_iter()
+                .for_each(|flag| args.push(flag.to_string()))
         }
         let out_str: &str = &exec_command(args).await?;
         Ok(serde_json::from_str(out_str)?)
@@ -254,12 +256,12 @@ pub struct AccountCmd {
 impl SecondCmd for AccountCmd {
     type Output = output::Account;
     type First = GetCmd;
-    fn first(&self) -> GetCmd {
-        self.first.clone()
+    fn first(&self) -> &GetCmd {
+        &self.first
     }
 
-    fn cmd(&self) -> String {
-        self.cmd.clone()
+    fn cmd(&self) -> &str {
+        &self.cmd
     }
 
     fn flags(&self) -> Vec<String> {
@@ -282,12 +284,12 @@ macro_rules! its_second_cmd {
         impl SecondCmd for $second_cmd {
             type Output = output::$output;
             type First = $first_cmd;
-            fn first(&self) -> $first_cmd {
-                self.first.clone()
+            fn first(&self) -> &$first_cmd {
+                &self.first
             }
 
-            fn cmd(&self) -> String {
-                self.cmd.clone()
+            fn cmd(&self) -> &str {
+                &self.cmd
             }
 
             fn flags(&self) -> Vec<String> {
