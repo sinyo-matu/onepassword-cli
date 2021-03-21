@@ -12,7 +12,7 @@ use tokio::process::Command;
 pub type Result<T> = std::result::Result<T, Error>;
 
 //OpCLI have expiration_time field what is the token's expiration time.
-//Intent to implement some method to auto renew the token.
+//Intent to implement some method to auto renew the token. //TODO
 #[derive(Clone)]
 pub struct OpCLI {
     expiration_time: DateTime<Utc>,
@@ -66,7 +66,7 @@ impl OpCLI {
 //all need same methods to return their fields, we need them later.
 // I don't want this be public, but this is referring by the  SecondCmd trait,
 // and SecondCmd trait is based by SecondCmdExt which have to be public!
-//How can I fix this? //todo
+//How can I fix this? //FIXME
 pub trait FirstCmd {
     fn cmd(&self) -> &str;
 
@@ -115,7 +115,7 @@ its_first_cmd!(CreateCmd);
 its_first_cmd!(ListCmd);
 
 //Maybe I can generic on some of second cmd's method, they seems like do same thing.
-//todo
+//TODO
 impl GetCmd {
     pub fn account(&self) -> AccountCmd {
         let flags: Vec<String> = Vec::new();
@@ -200,6 +200,7 @@ impl ListCmd {
 }
 
 //I don't want this be public same to FirstCmd comment.
+// some second cmds may not accept flag!, need some fix! //FIXME
 #[async_trait::async_trait]
 pub trait SecondCmd {
     type Output: DeserializeOwned;
@@ -210,13 +211,7 @@ pub trait SecondCmd {
     fn cmd(&self) -> &str;
 
     fn flags(&self) -> Vec<String>;
-}
 
-//This trait will auto implement for all who implemented SecondCmd trait.
-//But some second cmds may not accept flag!, need some fix! //todo
-//This have to be pubic because its methods will be called out of crate.
-#[async_trait::async_trait]
-pub trait SecondCmdExt: SecondCmd {
     fn add_flag(&mut self, flags: &[&str]) -> &Self {
         for flag in flags {
             if !self.flags().contains(&flag.to_string()) {
@@ -242,8 +237,6 @@ pub trait SecondCmdExt: SecondCmd {
         Ok(serde_json::from_str(out_str)?)
     }
 }
-
-impl<H: SecondCmd> SecondCmdExt for H {}
 
 #[derive(Debug)]
 pub struct AccountCmd {
