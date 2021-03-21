@@ -64,12 +64,12 @@ impl OpCLI {
 
 //I need this trait because because there are many different first cmds but they
 //all need same methods to return their fields, we need them later.
-// I don't want this be public, but this is referring by the  SecondCmd trait,
-// and SecondCmd trait is based by SecondCmdExt which have to be public!
-//How can I fix this? //FIXME
-pub trait FirstCmd {
+//The Sealed Pattern can prevent others impl this pub trait outside,
+//But seems like the cmd()... still can be called outside. //FIXME
+pub trait FirstCmd: private::Sealed {
+    #[doc(hidden)]
     fn cmd(&self) -> &str;
-
+    #[doc(hidden)]
     fn session(&self) -> &str;
 }
 
@@ -80,10 +80,11 @@ pub struct GetCmd {
 }
 
 impl FirstCmd for GetCmd {
+    #[doc(hidden)]
     fn cmd(&self) -> &str {
         &self.cmd
     }
-
+    #[doc(hidden)]
     fn session(&self) -> &str {
         &self.session
     }
@@ -100,10 +101,11 @@ macro_rules! its_first_cmd {
         }
 
         impl FirstCmd for $first_cmd {
+            #[doc(hidden)]
             fn cmd(&self) -> &str {
                 &self.cmd
             }
-
+            #[doc(hidden)]
             fn session(&self) -> &str {
                 &self.session
             }
@@ -199,17 +201,18 @@ impl ListCmd {
     }
 }
 
-//I don't want this be public same to FirstCmd comment.
-// some second cmds may not accept flag!, need some fix! //FIXME
+//The Sealed Pattern can prevent others impl this pub trait outside,
+//But seems like the first()... still can be called outside. //FIXME
 #[async_trait::async_trait]
-pub trait SecondCmd {
+pub trait SecondCmd: private::Sealed {
     type Output: DeserializeOwned;
     type First: FirstCmd + Clone;
 
+    #[doc(hidden)]
     fn first(&self) -> &Self::First;
-
+    #[doc(hidden)]
     fn cmd(&self) -> &str;
-
+    #[doc(hidden)]
     fn flags(&self) -> Vec<String>;
 
     fn add_flag(&mut self, flags: &[&str]) -> &Self {
@@ -249,14 +252,18 @@ pub struct AccountCmd {
 impl SecondCmd for AccountCmd {
     type Output = output::Account;
     type First = GetCmd;
+
+    #[doc(hidden)]
     fn first(&self) -> &GetCmd {
         &self.first
     }
 
+    #[doc(hidden)]
     fn cmd(&self) -> &str {
         &self.cmd
     }
 
+    #[doc(hidden)]
     fn flags(&self) -> Vec<String> {
         self.flags.clone()
     }
@@ -277,14 +284,15 @@ macro_rules! its_second_cmd {
         impl SecondCmd for $second_cmd {
             type Output = output::$output;
             type First = $first_cmd;
+            #[doc(hidden)]
             fn first(&self) -> &$first_cmd {
                 &self.first
             }
-
+            #[doc(hidden)]
             fn cmd(&self) -> &str {
                 &self.cmd
             }
-
+            #[doc(hidden)]
             fn flags(&self) -> Vec<String> {
                 self.flags.clone()
             }
@@ -332,4 +340,20 @@ async fn handle_op_exec_error(std_err: String) -> std::result::Result<(), Error>
         ));
     }
     Ok(())
+}
+
+mod private {
+    pub trait Sealed {}
+
+    impl Sealed for crate::AccountCmd {}
+    impl Sealed for crate::ListItemsCmd {}
+    impl Sealed for crate::ItemLiteCmd {}
+    impl Sealed for crate::GetDocumentCmd {}
+    impl Sealed for crate::GetTotpCmd {}
+    impl Sealed for crate::GetItemCmd {}
+    impl Sealed for crate::CreateDocumentCmd {}
+    impl Sealed for crate::ListDocumentsCmd {}
+    impl Sealed for crate::GetCmd {}
+    impl Sealed for crate::CreateCmd {}
+    impl Sealed for crate::ListCmd {}
 }
