@@ -59,8 +59,8 @@ cargo add onepassword-cli
 - get account info
 ```rust
 extern crate dotenv;
-extern crate onepassword_cli
-use onepassword_cli::{OpCLI}
+extern crate onepassword_cli;
+use onepassword_cli::OpCLI;
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
@@ -74,8 +74,8 @@ assert!(account.is_ok())
 - get a login item include username password
 ```rust
 extern crate dotenv;
-extern crate onepassword_cli
-use onepassword_cli::{OpCLI}
+extern crate onepassword_cli;
+use onepassword_cli::OpCLI;
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
@@ -88,8 +88,8 @@ println!("{:?}", &item_lite.unwrap().password);
 - create a document
 ```rust
 extern crate dotenv;
-extern crate onepassword_cli
-use onepassword_cli::{OpCLI}
+extern crate onepassword_cli;
+use onepassword_cli::OpCLI;
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
@@ -103,8 +103,8 @@ assert!(doc.is_ok())
 - get one time password
 ```rust
 extern crate dotenv;
-extern crate onepassword_cli
-use onepassword_cli::{OpCLI}
+extern crate onepassword_cli;
+use onepassword_cli::OpCLI;
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
