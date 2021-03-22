@@ -1,10 +1,11 @@
-mod error;
-mod output;
+pub mod error;
+pub mod output;
+pub mod prelude;
 mod tests;
 
 use chrono::{prelude::*, Duration};
 use error::Error;
-use serde::de::DeserializeOwned;
+
 use std::process::Stdio;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
@@ -62,24 +63,13 @@ impl OpCLI {
     }
 }
 
-//I need this trait because because there are many different first cmds but they
-//all need same methods to return their fields, we need them later.
-//The Sealed Pattern can prevent others impl this pub trait outside,
-//But seems like the cmd()... still can be called outside. //FIXME
-pub trait FirstCmd: private::Sealed {
-    #[doc(hidden)]
-    fn cmd(&self) -> &str;
-    #[doc(hidden)]
-    fn session(&self) -> &str;
-}
-
 #[derive(Debug, Clone)]
 pub struct GetCmd {
     cmd: String,
     session: String,
 }
 
-impl FirstCmd for GetCmd {
+impl sealed::FirstCmd for GetCmd {
     #[doc(hidden)]
     fn cmd(&self) -> &str {
         &self.cmd
@@ -100,7 +90,7 @@ macro_rules! its_first_cmd {
             session: String,
         }
 
-        impl FirstCmd for $first_cmd {
+        impl sealed::FirstCmd for $first_cmd {
             #[doc(hidden)]
             fn cmd(&self) -> &str {
                 &self.cmd
@@ -201,20 +191,10 @@ impl ListCmd {
     }
 }
 
-//The Sealed Pattern can prevent others impl this pub trait outside,
-//But seems like the first()... still can be called outside. //FIXME
+use crate::sealed::{FirstCmd, SecondCmd};
+
 #[async_trait::async_trait]
-pub trait SecondCmd: private::Sealed {
-    type Output: DeserializeOwned;
-    type First: FirstCmd + Clone;
-
-    #[doc(hidden)]
-    fn first(&self) -> &Self::First;
-    #[doc(hidden)]
-    fn cmd(&self) -> &str;
-    #[doc(hidden)]
-    fn flags(&self) -> Vec<String>;
-
+pub trait SecondCmdExt: SecondCmd {
     fn add_flag(&mut self, flags: &[&str]) -> &Self {
         for flag in flags {
             if !self.flags().contains(&flag.to_string()) {
@@ -240,6 +220,8 @@ pub trait SecondCmd: private::Sealed {
         Ok(serde_json::from_str(out_str)?)
     }
 }
+
+impl<T: SecondCmd> SecondCmdExt for T {}
 
 #[derive(Debug)]
 pub struct AccountCmd {
@@ -342,18 +324,26 @@ async fn handle_op_exec_error(std_err: String) -> std::result::Result<(), Error>
     Ok(())
 }
 
-mod private {
-    pub trait Sealed {}
+mod sealed {
+    use serde::de::DeserializeOwned;
 
-    impl Sealed for crate::AccountCmd {}
-    impl Sealed for crate::ListItemsCmd {}
-    impl Sealed for crate::ItemLiteCmd {}
-    impl Sealed for crate::GetDocumentCmd {}
-    impl Sealed for crate::GetTotpCmd {}
-    impl Sealed for crate::GetItemCmd {}
-    impl Sealed for crate::CreateDocumentCmd {}
-    impl Sealed for crate::ListDocumentsCmd {}
-    impl Sealed for crate::GetCmd {}
-    impl Sealed for crate::CreateCmd {}
-    impl Sealed for crate::ListCmd {}
+    pub trait FirstCmd {
+        #[doc(hidden)]
+        fn cmd(&self) -> &str;
+        #[doc(hidden)]
+        fn session(&self) -> &str;
+    }
+
+    #[async_trait::async_trait]
+    pub trait SecondCmd {
+        type Output: DeserializeOwned;
+        type First: FirstCmd + Clone;
+
+        #[doc(hidden)]
+        fn first(&self) -> &Self::First;
+        #[doc(hidden)]
+        fn cmd(&self) -> &str;
+        #[doc(hidden)]
+        fn flags(&self) -> Vec<String>;
+    }
 }

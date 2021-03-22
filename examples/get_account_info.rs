@@ -1,4 +1,4 @@
-use onepassword_cli::{OpCLI, SecondCmd};
+use onepassword_cli::prelude::*;
 
 #[tokio::main]
 async fn main() {

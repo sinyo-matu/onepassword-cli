@@ -55,11 +55,13 @@ cargo add onepassword-cli
 ```
 
 # How to use
+### Need `use onepassword_cli::prelude::*;` in scope!
+
 - get account info
 ```rust
 extern crate dotenv;
 extern crate onepassword_cli
-use onepassword_cli::*;
+use onepassword_cli::prelude::*
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
@@ -74,7 +76,7 @@ assert!(account.is_ok())
 ```rust
 extern crate dotenv;
 extern crate onepassword_cli
-use onepassword_cli::*;
+use onepassword_cli::prelude::* 
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
@@ -88,7 +90,7 @@ println!("{:?}", &item_lite.unwrap().password);
 ```rust
 extern crate dotenv;
 extern crate onepassword_cli
-use onepassword_cli::*;
+use onepassword_cli::prelude::* 
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
@@ -103,7 +105,7 @@ assert!(doc.is_ok())
 ```rust
 extern crate dotenv;
 extern crate onepassword_cli
-use onepassword_cli::*;
+use onepassword_cli::prelude::*
 
 dotenv::dotenv().unwrap();
 let pass = dotenv::var("OP_PASS").unwrap();
