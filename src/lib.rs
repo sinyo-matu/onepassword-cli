@@ -1,8 +1,6 @@
 pub mod error;
 pub mod output;
-pub mod prelude;
 mod tests;
-
 use chrono::{prelude::*, Duration};
 use error::Error;
 
@@ -323,6 +321,37 @@ async fn handle_op_exec_error(std_err: String) -> std::result::Result<(), Error>
     }
     Ok(())
 }
+
+//why I need this: because SecondCmdExt need explicit scope in.
+//So use this to impl a casting method for the struct who
+//implemented SecondCmdExt. now used do not need `use crate::SecondCmdExt`
+macro_rules! impl_casting_method {
+    ($($ObjName:ident),* $(,)?) => {
+        $(
+            impl $ObjName {
+
+                pub async fn run(&self) -> Result<<Self as SecondCmd>::Output> {
+                    <Self as SecondCmdExt>::run(self).await
+                }
+
+                pub fn add_flag(&mut self, flags: &[&str]) -> &Self {
+                    <Self as SecondCmdExt>::add_flag(self, flags)
+                }
+            }
+        )*
+    };
+}
+
+impl_casting_method!(
+    ItemLiteCmd,
+    GetDocumentCmd,
+    GetTotpCmd,
+    GetItemCmd,
+    CreateDocumentCmd,
+    ListDocumentsCmd,
+    ListItemsCmd,
+    AccountCmd
+);
 
 mod sealed {
     use serde::de::DeserializeOwned;
