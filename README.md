@@ -3,6 +3,8 @@
 [![crate.io](https://img.shields.io/crates/v/onepassword-cli)](https://crates.io/crates/onepassword-cli)
 
 A wrapper for [1password-cli](https://support.1password.com/command-line-getting-started/). It intent to offering a similar usage with the cli, make it easy-to-use.
+For using this crate, you need to setup 1password-cli first.
+Please see [1password-cli getting started](https://support.1password.com/command-line-getting-started/)
 For now, only part of the cli utility have been implemented
 - get
   - [x] account

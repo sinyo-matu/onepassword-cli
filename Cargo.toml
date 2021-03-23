@@ -22,3 +22,8 @@ async-trait = "0.1.48"
 [dev-dependencies]
 dotenv = "0.15.0"
 tokio = { version = "1.3.0", features = ["full"] }
+
+
+[[example]]
+name="get_account_info"
+path="examples/get_account_info.rs"
