@@ -8,6 +8,8 @@ use std::process::Stdio;
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 
+use crate::sealed::{FirstCmd, SecondCmd};
+
 pub type Result<T> = std::result::Result<T, Error>;
 
 //OpCLI have expiration_time field what is the token's expiration time.
@@ -19,6 +21,7 @@ pub struct OpCLI {
 }
 
 impl OpCLI {
+    #[inline]
     pub async fn new_with_pass(username: &str, password: &str) -> Result<Self> {
         let mut child = Command::new("op")
             .arg("signin")
@@ -53,6 +56,7 @@ impl OpCLI {
         }
     }
 
+    #[inline]
     pub fn list(&self) -> ListCmd {
         ListCmd {
             cmd: "list".to_string(),
@@ -189,8 +193,6 @@ impl ListCmd {
     }
 }
 
-use crate::sealed::{FirstCmd, SecondCmd};
-
 #[async_trait::async_trait]
 pub trait SecondCmdExt: SecondCmd {
     fn add_flag(&mut self, flags: &[&str]) -> &Self {
@@ -310,21 +312,23 @@ async fn handle_op_signin_error(std_err: String) -> std::result::Result<(), Erro
 
 #[inline]
 async fn handle_op_exec_error(std_err: String) -> std::result::Result<(), Error> {
-    if std_err.contains("doesn't seem to be an item") {
-        return Err(Error::ItemQueryError("Item not founded".to_string()));
-    } else if std_err.trim().contains("Invalid session token") {
-        return Err(Error::ItemQueryError("In valid session token".to_string()));
-    } else if std_err.trim().contains("More than one item matches") {
-        return Err(Error::ItemQueryError(
+    match std_err.trim() {
+        err if err.contains("doesn't seem to be an item") => {
+            Err(Error::ItemQueryError("Item not founded".to_string()))
+        }
+        err if err.contains("Invalid session token") => {
+            Err(Error::ItemQueryError("In valid session token".to_string()))
+        }
+        err if err.contains("More than one item matches") => Err(Error::ItemQueryError(
             "More than one item matches".to_string(),
-        ));
+        )),
+        _ => Ok(()),
     }
-    Ok(())
 }
 
-//why I need this: because SecondCmdExt need explicit scope in.
-//So use this to impl a casting method for the struct who
-//implemented SecondCmdExt. now used do not need `use crate::SecondCmdExt`
+//why I need this: Cause of SecondCmdExt need explicit scope in.
+//So this will impl a casting method for the struct who
+//implemented SecondCmdExt. now user do not need `use crate::SecondCmdExt`
 macro_rules! impl_casting_method {
     ($($ObjName:ident),* $(,)?) => {
         $(
