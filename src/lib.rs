@@ -304,10 +304,13 @@ async fn exec_command(args: Vec<String>) -> Result<String> {
 
 #[inline]
 async fn handle_op_signin_error(std_err: String) -> std::result::Result<(), Error> {
-    if std_err.contains("401") {
-        return Err(Error::OPSignInError("wrong password".to_string()));
+    match std_err.trim() {
+        err if err.contains("401") => Err(Error::OPSignInError("wrong password".to_string())),
+        err if err.contains("Account not found") => {
+            Err(Error::OPSignInError("account does not exist".to_string()))
+        }
+        _ => Ok(()),
     }
-    Ok(())
 }
 
 #[inline]
