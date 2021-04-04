@@ -35,9 +35,9 @@ For now, only part of the cli utility have been implemented
   - [ ] group
   - [ ] user
 - delete
-  - [ ] document
+  - [x] document
   - [ ] group
-  - [ ] item
+  - [x] item
   - [ ] trash
   - [ ] user
   - [ ] vault
