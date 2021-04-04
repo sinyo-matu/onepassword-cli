@@ -59,9 +59,13 @@ async fn test_create_document() {
     dotenv::dotenv().unwrap();
     let pass = dotenv::var("OP_PASS").unwrap();
     let op_cli = OpCLI::new_with_pass("my", &pass).await.unwrap();
-    let account = op_cli.create().document("newnew_json.json").run().await;
-    println!("{:?}", &account);
-    assert!(account.is_ok())
+    let doc = op_cli
+        .create()
+        .document("./test/newnew_json.json")
+        .run()
+        .await;
+    println!("{:?}", &doc);
+    assert!(doc.is_ok())
 }
 
 #[tokio::test]
@@ -102,4 +106,43 @@ async fn test_list_items() {
     let doc = op_cli.list().items().run().await;
     println!("{:?}", &doc);
     assert!(doc.is_ok())
+}
+
+#[tokio::test]
+async fn test_list_users() {
+    dotenv::dotenv().unwrap();
+    let pass = dotenv::var("OP_PASS").unwrap();
+    let op_cli = OpCLI::new_with_pass("my", &pass).await.unwrap();
+    let doc = op_cli.list().users().run().await;
+    println!("{:?}", &doc);
+    assert!(doc.is_ok())
+}
+
+#[tokio::test]
+async fn test_get_user() {
+    dotenv::dotenv().unwrap();
+    let pass = dotenv::var("OP_PASS").unwrap();
+    let op_cli = OpCLI::new_with_pass("my", &pass).await.unwrap();
+    let doc = op_cli.list().users().run().await;
+    let uuid = &doc.unwrap()[0].uuid;
+    let doc = op_cli.get().user(uuid).run().await;
+    println!("{:?}", &doc);
+    assert!(doc.is_ok())
+}
+
+#[tokio::test]
+async fn test_delete_document() {
+    dotenv::dotenv().unwrap();
+    let pass = dotenv::var("OP_PASS").unwrap();
+    let op_cli = OpCLI::new_with_pass("my", &pass).await.unwrap();
+    let doc = op_cli
+        .create()
+        .document("./test/newnew_json.json")
+        .run()
+        .await;
+    println!("{:?}", &doc);
+    assert!(doc.is_ok());
+    let res = op_cli.delete().document("newnew_json.json").run().await;
+    println!("{:?}", &res);
+    assert!(res.is_ok())
 }

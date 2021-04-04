@@ -63,6 +63,14 @@ impl OpCLI {
             session: self.session.to_string(),
         }
     }
+
+    #[inline]
+    pub fn delete(&self) -> DeleteCmd {
+        DeleteCmd {
+            cmd: "delete".to_string(),
+            session: self.session.to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -107,6 +115,7 @@ macro_rules! its_first_cmd {
 
 its_first_cmd!(CreateCmd);
 its_first_cmd!(ListCmd);
+its_first_cmd!(DeleteCmd);
 
 //Maybe I can generic on some of second cmd's method, they seems like do same thing.
 //TODO
@@ -121,9 +130,9 @@ impl GetCmd {
     }
 
     ///this method return items' fields of website,username,password
-    pub fn item_lite(&self, item_name: &str) -> ItemLiteCmd {
+    pub fn item_lite(&self, item: &str) -> ItemLiteCmd {
         let flags: Vec<String> = vec![
-            item_name.to_string(),
+            item.to_string(),
             "--fields".to_string(),
             "website,username,password".to_string(),
         ];
@@ -134,8 +143,8 @@ impl GetCmd {
         }
     }
 
-    pub fn item(&self, item_name: &str) -> GetItemCmd {
-        let flags: Vec<String> = vec![item_name.to_string()];
+    pub fn item(&self, item: &str) -> GetItemCmd {
+        let flags: Vec<String> = vec![item.to_string()];
         GetItemCmd {
             first: self.clone(),
             cmd: "item".to_string(),
@@ -143,8 +152,8 @@ impl GetCmd {
         }
     }
 
-    pub fn document(&self, document_name: &str) -> GetDocumentCmd {
-        let flags: Vec<String> = vec![document_name.to_string()];
+    pub fn document(&self, doc: &str) -> GetDocumentCmd {
+        let flags: Vec<String> = vec![doc.to_string()];
         GetDocumentCmd {
             first: self.clone(),
             cmd: "document".to_string(),
@@ -158,6 +167,16 @@ impl GetCmd {
         GetTotpCmd {
             first: self.clone(),
             cmd: "totp".to_string(),
+            flags,
+        }
+    }
+
+    pub fn user(&self, uuid: &str) -> GetUserCmd {
+        let flags: Vec<String> = vec![uuid.to_string()];
+
+        GetUserCmd {
+            first: self.clone(),
+            cmd: "user".to_string(),
             flags,
         }
     }
@@ -191,6 +210,35 @@ impl ListCmd {
             flags,
         }
     }
+
+    pub fn users(&self) -> ListUsersCmd {
+        let flags: Vec<String> = Vec::new();
+        ListUsersCmd {
+            first: self.clone(),
+            cmd: "users".to_string(),
+            flags,
+        }
+    }
+}
+
+impl DeleteCmd {
+    pub fn item(&self) -> DeleteItemCmd {
+        let flags: Vec<String> = Vec::new();
+        DeleteItemCmd {
+            first: self.clone(),
+            cmd: "item".to_string(),
+            flags,
+        }
+    }
+
+    pub fn document(&self, doc: &str) -> DeleteDocumentCmd {
+        let flags: Vec<String> = vec![doc.to_string()];
+        DeleteDocumentCmd {
+            first: self.clone(),
+            cmd: "document".to_string(),
+            flags,
+        }
+    }
 }
 
 #[async_trait::async_trait]
@@ -217,6 +265,9 @@ pub trait SecondCmdExt: SecondCmd {
                 .for_each(|flag| args.push(flag.to_string()))
         }
         let out_str: &str = &exec_command(args).await?;
+        if out_str.len() == 0 {
+            return Ok(serde_json::from_str("{\"field\":\"ok\"}")?);
+        }
         Ok(serde_json::from_str(out_str)?)
     }
 }
@@ -286,9 +337,13 @@ its_second_cmd!(GetCmd, ItemLiteCmd, ItemLite);
 its_second_cmd!(GetCmd, GetDocumentCmd, Value);
 its_second_cmd!(GetCmd, GetTotpCmd, Value);
 its_second_cmd!(GetCmd, GetItemCmd, GetItem);
+its_second_cmd!(GetCmd, GetUserCmd, GetUser);
 its_second_cmd!(CreateCmd, CreateDocumentCmd, CreateDocument);
 its_second_cmd!(ListCmd, ListDocumentsCmd, ListDocuments);
 its_second_cmd!(ListCmd, ListItemsCmd, ListItems);
+its_second_cmd!(ListCmd, ListUsersCmd, ListUsers);
+its_second_cmd!(DeleteCmd, DeleteItemCmd, DeleteItem);
+its_second_cmd!(DeleteCmd, DeleteDocumentCmd, DeleteDocument);
 
 #[inline]
 async fn exec_command(args: Vec<String>) -> Result<String> {
@@ -323,7 +378,7 @@ async fn handle_op_exec_error(std_err: String) -> std::result::Result<(), Error>
             Err(Error::ItemQueryError("In valid session token".to_string()))
         }
         err if err.contains("More than one item matches") => Err(Error::ItemQueryError(
-            "More than one item matches".to_string(),
+            "More than one item matches,Please specify one by uuid".to_string(),
         )),
         _ => Ok(()),
     }

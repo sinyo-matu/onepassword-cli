@@ -5,6 +5,8 @@ pub use serde_json::Value;
 pub type ListDocuments = Vec<ListDocument>;
 
 pub type ListItems = Vec<ListItem>;
+
+pub type ListUsers = Vec<ListUser>;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ItemLite {
     pub website: String,
@@ -85,6 +87,56 @@ pub struct ListDocument {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct ListUser {
+    pub uuid: String,
+    #[serde(alias = "firstName")]
+    pub first_name: String,
+    #[serde(alias = "lastName")]
+    pub last_name: String,
+    pub name: String,
+    pub email: String,
+    pub avatar: String,
+    pub state: String,
+    #[serde(alias = "type")]
+    pub type_: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetUser {
+    pub uuid: String,
+    #[serde(alias = "createdAt")]
+    #[serde(with = "date_format")]
+    pub create_at: DateTime<Local>,
+    #[serde(alias = "updatedAt")]
+    #[serde(with = "date_format")]
+    pub update_at: DateTime<Local>,
+    #[serde(alias = "lastAuthAt")]
+    #[serde(with = "date_format")]
+    pub last_auth_at: DateTime<Local>,
+    #[serde(alias = "firstName")]
+    pub first_name: String,
+    #[serde(alias = "lastName")]
+    pub last_name: String,
+    pub name: String,
+    pub email: String,
+    #[serde(alias = "attrVersion")]
+    pub attr_version: usize,
+    #[serde(alias = "keysetVersion")]
+    pub keyset_version: usize,
+    pub language: String,
+    #[serde(alias = "accountKeyFormat")]
+    pub account_key_format: String,
+    #[serde(alias = "accountKeyUuid")]
+    pub account_key_uuid: String,
+    #[serde(alias = "combinedPermissions")]
+    pub combined_permissions: usize,
+    pub avatar: String,
+    pub state: String,
+    #[serde(alias = "type")]
+    pub type_: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ListItem {
     pub uuid: String,
     #[serde(alias = "templateUuid")]
@@ -103,6 +155,16 @@ pub struct ListItem {
     #[serde(alias = "vaultUuid")]
     pub vault_uuid: String,
     pub overview: Value, // this field is a serde_json::Value because its content would change depend on the queried item.
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DeleteItem {
+    pub field: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DeleteDocument {
+    pub field: String,
 }
 
 //this mod helped to deserialize json string to chrono::DateTime.
