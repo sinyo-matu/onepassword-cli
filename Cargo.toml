@@ -10,8 +10,6 @@ keywords = ["cli","1password","wrapper"]
 repository = "https://github.com/sinyo-matu/onepassword-cli"
 readme = "README.md"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 tokio={version="1.0.0",features=["process","io-util","io-std"]}
 chrono= "0.4"

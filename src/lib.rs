@@ -93,14 +93,15 @@ impl sealed::FirstCmd for GetCmd {
 //this macro repeat codes above. to create a first cmd then
 //implement FirstCmd trait for it.
 macro_rules! its_first_cmd {
-    ($first_cmd:ident) => {
+    ($($FirstCmd:ident),+ $(,)?) => {
+        $(
         #[derive(Debug, Clone)]
-        pub struct $first_cmd {
+        pub struct $FirstCmd {
             cmd: String,
             session: String,
         }
 
-        impl sealed::FirstCmd for $first_cmd {
+        impl sealed::FirstCmd for $FirstCmd {
             #[doc(hidden)]
             fn cmd(&self) -> &str {
                 &self.cmd
@@ -110,12 +111,11 @@ macro_rules! its_first_cmd {
                 &self.session
             }
         }
+    )+
     };
 }
 
-its_first_cmd!(CreateCmd);
-its_first_cmd!(ListCmd);
-its_first_cmd!(DeleteCmd);
+its_first_cmd!(CreateCmd, ListCmd, DeleteCmd);
 
 //Maybe I can generic on some of second cmd's method, they seems like do same thing.
 //TODO
@@ -305,20 +305,20 @@ impl SecondCmd for AccountCmd {
 //This macro repeat above codes. To create a new second cmd struct
 //and implement SecondCmd trait for it.
 macro_rules! its_second_cmd {
-    ($first_cmd:ident,$second_cmd:ident,$output:ident) => {
-        #[derive(Debug)]
-        pub struct $second_cmd {
-            first: $first_cmd,
+    ($(($FirstCmd:ident,$SecondCmd:ident,$Output:ident)),+ $(,)?) => {
+        $(#[derive(Debug)]
+        pub struct $SecondCmd {
+            first: $FirstCmd,
             cmd: String,
             flags: Vec<String>,
         }
 
         #[async_trait::async_trait]
-        impl SecondCmd for $second_cmd {
-            type Output = output::$output;
-            type First = $first_cmd;
+        impl SecondCmd for $SecondCmd {
+            type Output = output::$Output;
+            type First = $FirstCmd;
             #[doc(hidden)]
-            fn first(&self) -> &$first_cmd {
+            fn first(&self) -> &$FirstCmd {
                 &self.first
             }
             #[doc(hidden)]
@@ -329,21 +329,23 @@ macro_rules! its_second_cmd {
             fn flags(&self) -> Vec<String> {
                 self.flags.clone()
             }
-        }
+        })+
     };
 }
 
-its_second_cmd!(GetCmd, ItemLiteCmd, ItemLite);
-its_second_cmd!(GetCmd, GetDocumentCmd, Value);
-its_second_cmd!(GetCmd, GetTotpCmd, Value);
-its_second_cmd!(GetCmd, GetItemCmd, GetItem);
-its_second_cmd!(GetCmd, GetUserCmd, GetUser);
-its_second_cmd!(CreateCmd, CreateDocumentCmd, CreateDocument);
-its_second_cmd!(ListCmd, ListDocumentsCmd, ListDocuments);
-its_second_cmd!(ListCmd, ListItemsCmd, ListItems);
-its_second_cmd!(ListCmd, ListUsersCmd, ListUsers);
-its_second_cmd!(DeleteCmd, DeleteItemCmd, DeleteItem);
-its_second_cmd!(DeleteCmd, DeleteDocumentCmd, DeleteDocument);
+its_second_cmd!(
+    (GetCmd, ItemLiteCmd, ItemLite),
+    (GetCmd, GetDocumentCmd, Value),
+    (GetCmd, GetTotpCmd, Value),
+    (GetCmd, GetItemCmd, GetItem),
+    (GetCmd, GetUserCmd, GetUser),
+    (CreateCmd, CreateDocumentCmd, CreateDocument),
+    (ListCmd, ListDocumentsCmd, ListDocuments),
+    (ListCmd, ListItemsCmd, ListItems),
+    (ListCmd, ListUsersCmd, ListUsers),
+    (DeleteCmd, DeleteItemCmd, DeleteItem),
+    (DeleteCmd, DeleteDocumentCmd, DeleteDocument)
+);
 
 #[inline]
 async fn exec_command(args: Vec<String>) -> Result<String> {
@@ -388,7 +390,7 @@ async fn handle_op_exec_error(std_err: String) -> std::result::Result<(), Error>
 //So this will impl a casting method for the struct who
 //implemented SecondCmdExt. now user do not need `use crate::SecondCmdExt`
 macro_rules! impl_casting_method {
-    ($($ObjName:ident),* $(,)?) => {
+    ($($ObjName:ident),+ $(,)?) => {
         $(
             impl $ObjName {
 
@@ -400,7 +402,7 @@ macro_rules! impl_casting_method {
                     <Self as SecondCmdExt>::add_flag(self, flags)
                 }
             }
-        )*
+        )+
     };
 }
 
